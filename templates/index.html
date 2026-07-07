@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Study Generator — IBM Watsonx.ai</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- ─── NAV ──────────────────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <span class="brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
+      <span class="brand-text">Smart<span class="accent">Study</span></span>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navCollapse" aria-label="Toggle navigation">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navCollapse">
+      <ul class="navbar-nav mx-auto gap-1">
+        <li class="nav-item"><a class="nav-link nav-pill active" href="#" data-tab="chat"><i class="bi bi-chat-dots me-1"></i>Chat</a></li>
+        <li class="nav-item"><a class="nav-link nav-pill" href="#" data-tab="studyplan"><i class="bi bi-journal-bookmark me-1"></i>Study Plan</a></li>
+        <li class="nav-item"><a class="nav-link nav-pill" href="#" data-tab="quiz"><i class="bi bi-patch-question me-1"></i>Quiz</a></li>
+        <li class="nav-item"><a class="nav-link nav-pill" href="#" data-tab="breakdown"><i class="bi bi-diagram-3 me-1"></i>Topic Breakdown</a></li>
+        <li class="nav-item"><a class="nav-link nav-pill" href="#" data-tab="progress"><i class="bi bi-bar-chart-line me-1"></i>Progress</a></li>
+      </ul>
+
+      <div class="d-flex align-items-center gap-3">
+        <!-- Subject selector -->
+        <select id="globalSubject" class="form-select form-select-sm subject-select" title="Active subject">
+          <option value="">Select subject…</option>
+          <option>Mathematics</option>
+          <option>Physics</option>
+          <option>Chemistry</option>
+          <option>Biology</option>
+          <option>Computer Science</option>
+          <option>History</option>
+          <option>Literature</option>
+          <option>Economics</option>
+          <option>Psychology</option>
+          <option>Philosophy</option>
+        </select>
+        <!-- Dark-mode toggle -->
+        <button id="themeToggle" class="btn btn-icon" title="Toggle dark mode">
+          <i class="bi bi-moon-stars-fill"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO BANNER ───────────────────────────────────────────────────────── -->
+<div class="hero-banner" id="heroBanner">
+  <div class="hero-content">
+    <div class="hero-badge"><i class="bi bi-stars me-1"></i>Powered by IBM Watsonx.ai Granite</div>
+    <h1>Your AI-Powered <span class="accent">Study</span> Companion</h1>
+    <p>Personalised study plans · Smart quizzes · Topic breakdowns · Progress tracking</p>
+    <button class="btn btn-hero" onclick="document.getElementById('mainContent').scrollIntoView({behavior:'smooth'})">
+      Start Learning <i class="bi bi-arrow-down ms-1"></i>
+    </button>
+  </div>
+  <div class="hero-orbs" aria-hidden="true">
+    <span class="orb orb1"></span><span class="orb orb2"></span><span class="orb orb3"></span>
+  </div>
+</div>
+
+<!-- ─── AGENT INFO STRIP ──────────────────────────────────────────────────── -->
+<div class="agent-strip" id="agentStrip">
+  <div class="container-fluid px-4">
+    <span><i class="bi bi-robot me-1"></i>Agent: <strong id="agentName">StudyBot</strong></span>
+    <span class="mx-2">·</span>
+    <span>Tone: <em id="agentTone">—</em></span>
+    <span class="mx-2">·</span>
+    <span>Speciality: <em id="agentSpeciality">—</em></span>
+    <span class="mx-2">·</span>
+    <span>Depth: <em id="agentDepth">—</em></span>
+  </div>
+</div>
+
+<!-- ─── MAIN CONTENT ──────────────────────────────────────────────────────── -->
+<main class="container-fluid px-3 px-md-4 py-4" id="mainContent">
+
+  <!-- ══ CHAT TAB ════════════════════════════════════════════════════════════ -->
+  <section id="tab-chat" class="tab-section active">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card chat-card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-chat-dots-fill me-2 accent"></i>Chat with <span class="agent-name-inline">StudyBot</span></span>
+            <button class="btn btn-sm btn-ghost" id="clearChatBtn" title="Clear chat">
+              <i class="bi bi-trash3"></i> Clear
+            </button>
+          </div>
+          <div class="card-body chat-body" id="chatMessages">
+            <!-- Welcome message injected by JS -->
+          </div>
+          <div class="card-footer chat-footer">
+            <div class="input-group">
+              <input type="text" id="chatInput" class="form-control"
+                     placeholder="Ask anything about your studies…" autocomplete="off" />
+              <button class="btn btn-send" id="sendBtn">
+                <i class="bi bi-send-fill"></i>
+              </button>
+            </div>
+            <div class="quick-prompts mt-2" id="quickPrompts">
+              <span class="qp-label">Quick:</span>
+              <button class="btn btn-qp" data-msg="Explain this topic step by step">Step-by-step</button>
+              <button class="btn btn-qp" data-msg="Give me a mnemonic to remember this">Mnemonic</button>
+              <button class="btn btn-qp" data-msg="What should I study next?">What next?</button>
+              <button class="btn btn-qp" data-msg="Give me a 5-minute break idea">Break idea</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card info-card mb-3">
+          <div class="card-header"><i class="bi bi-person-circle me-2 accent"></i>Subject Profile</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Active Subject</label>
+              <select id="profileSubject" class="form-select">
+                <option value="">Choose subject…</option>
+                <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+                <option>Biology</option><option>Computer Science</option><option>History</option>
+                <option>Literature</option><option>Economics</option><option>Psychology</option>
+                <option>Philosophy</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Your Level</label>
+              <select id="profileLevel" class="form-select">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Learning Goal</label>
+              <input type="text" id="profileGoal" class="form-control" placeholder="e.g. Pass finals with A grade" />
+            </div>
+            <button class="btn btn-primary w-100" id="saveProfileBtn">
+              <i class="bi bi-floppy me-1"></i>Save Profile
+            </button>
+          </div>
+        </div>
+
+        <div class="card info-card">
+          <div class="card-header"><i class="bi bi-lightning-charge-fill me-2 accent"></i>Quick Actions</div>
+          <div class="card-body d-grid gap-2">
+            <button class="btn btn-outline-accent" onclick="switchTab('studyplan')"><i class="bi bi-journal-bookmark me-1"></i>Generate Study Plan</button>
+            <button class="btn btn-outline-accent" onclick="switchTab('quiz')"><i class="bi bi-patch-question me-1"></i>Take a Quiz</button>
+            <button class="btn btn-outline-accent" onclick="switchTab('breakdown')"><i class="bi bi-diagram-3 me-1"></i>Break Down a Topic</button>
+            <button class="btn btn-outline-accent" onclick="switchTab('progress')"><i class="bi bi-bar-chart-line me-1"></i>View Progress</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ STUDY PLAN TAB ═══════════════════════════════════════════════════════ -->
+  <section id="tab-studyplan" class="tab-section">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card form-card">
+          <div class="card-header"><i class="bi bi-journal-bookmark-fill me-2 accent"></i>Study Plan Generator</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Subject *</label>
+              <input type="text" id="spSubject" class="form-control" placeholder="e.g. Calculus" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Learning Goal</label>
+              <textarea id="spGoal" class="form-control" rows="2" placeholder="e.g. Master integration techniques"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Hours per week: <strong id="spHoursVal">10</strong>h</label>
+              <input type="range" id="spHours" class="form-range" min="1" max="40" value="10" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Current Level</label>
+              <select id="spLevel" class="form-select">
+                <option value="beginner">Beginner</option>
+                <option value="intermediate" selected>Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <button class="btn btn-primary w-100" id="genPlanBtn">
+              <i class="bi bi-magic me-1"></i>Generate Plan
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card result-card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-clipboard2-check me-2 accent"></i>Your Study Plan</span>
+            <button class="btn btn-sm btn-ghost" id="copyPlanBtn" style="display:none"><i class="bi bi-clipboard me-1"></i>Copy</button>
+          </div>
+          <div class="card-body result-body" id="planResult">
+            <div class="empty-state"><i class="bi bi-journal-bookmark display-4"></i><p>Fill in the form and click Generate to get your personalised study plan.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ QUIZ TAB ═════════════════════════════════════════════════════════════ -->
+  <section id="tab-quiz" class="tab-section">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card form-card">
+          <div class="card-header"><i class="bi bi-patch-question-fill me-2 accent"></i>Quiz Generator</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Subject *</label>
+              <input type="text" id="qzSubject" class="form-control" placeholder="e.g. Biology" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Topic *</label>
+              <input type="text" id="qzTopic" class="form-control" placeholder="e.g. Cell Division" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Questions: <strong id="qzQVal">5</strong></label>
+              <input type="range" id="qzQuestions" class="form-range" min="2" max="10" value="5" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Difficulty</label>
+              <select id="qzDifficulty" class="form-select">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+            <button class="btn btn-primary w-100" id="genQuizBtn">
+              <i class="bi bi-magic me-1"></i>Generate Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card result-card h-100">
+          <div class="card-header"><i class="bi bi-card-checklist me-2 accent"></i>Quiz</div>
+          <div class="card-body result-body" id="quizResult">
+            <div class="empty-state"><i class="bi bi-patch-question display-4"></i><p>Set parameters and click Generate Quiz to begin.</p></div>
+          </div>
+          <div class="card-footer" id="quizFooter" style="display:none">
+            <div class="d-flex align-items-center justify-content-between">
+              <span id="quizScore" class="fw-semibold"></span>
+              <button class="btn btn-primary btn-sm" id="submitQuizBtn">Submit Answers</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ TOPIC BREAKDOWN TAB ══════════════════════════════════════════════════ -->
+  <section id="tab-breakdown" class="tab-section">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="card form-card">
+          <div class="card-header"><i class="bi bi-diagram-3-fill me-2 accent"></i>Topic Breakdown</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Subject *</label>
+              <input type="text" id="tbSubject" class="form-control" placeholder="e.g. Physics" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Topic *</label>
+              <input type="text" id="tbTopic" class="form-control" placeholder="e.g. Newton's Laws of Motion" />
+            </div>
+            <button class="btn btn-primary w-100" id="genBreakdownBtn">
+              <i class="bi bi-magic me-1"></i>Break it Down
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card result-card h-100">
+          <div class="card-header d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-layers me-2 accent"></i>Topic Breakdown</span>
+            <button class="btn btn-sm btn-ghost" id="copyBreakdownBtn" style="display:none"><i class="bi bi-clipboard me-1"></i>Copy</button>
+          </div>
+          <div class="card-body result-body" id="breakdownResult">
+            <div class="empty-state"><i class="bi bi-diagram-3 display-4"></i><p>Enter a topic and click Break it Down for a deep dive.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ PROGRESS TAB ══════════════════════════════════════════════════════════ -->
+  <section id="tab-progress" class="tab-section">
+    <div class="row g-4 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-chat-square-dots-fill"></i></div>
+          <div class="stat-val" id="statSessions">0</div>
+          <div class="stat-label">Chat Sessions</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-book-fill"></i></div>
+          <div class="stat-val" id="statTopics">0</div>
+          <div class="stat-label">Topics Covered</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-patch-check-fill"></i></div>
+          <div class="stat-val" id="statQuizzes">0</div>
+          <div class="stat-label">Quizzes Taken</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-trophy-fill"></i></div>
+          <div class="stat-val" id="statAvgScore">—</div>
+          <div class="stat-label">Avg Quiz Score</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card info-card h-100">
+          <div class="card-header"><i class="bi bi-bookmark-star me-2 accent"></i>Topics Covered</div>
+          <div class="card-body" id="topicsList">
+            <p class="text-muted fst-italic">No topics yet. Start studying!</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card info-card h-100">
+          <div class="card-header"><i class="bi bi-calendar3 me-2 accent"></i>Activity</div>
+          <div class="card-body">
+            <div class="mb-3"><span class="stat-mini-label">Study Plans Created</span><span class="stat-mini-val" id="statPlans">0</span></div>
+            <div class="mb-3"><span class="stat-mini-label">Last Active</span><span class="stat-mini-val" id="statLastActive">—</span></div>
+            <hr />
+            <h6 class="mb-3">Pomodoro Timer</h6>
+            <div class="pomodoro" id="pomodoroTimer">
+              <div class="pomo-display" id="pomoDisplay">25:00</div>
+              <div class="pomo-label" id="pomoLabel">Focus Time</div>
+              <div class="d-flex gap-2 justify-content-center mt-3">
+                <button class="btn btn-sm btn-primary" id="pomoStart">Start</button>
+                <button class="btn btn-sm btn-outline-secondary" id="pomoReset">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 text-end">
+      <button class="btn btn-outline-danger btn-sm" id="resetProgressBtn">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset All Progress
+      </button>
+    </div>
+  </section>
+
+</main>
+
+<!-- ─── LOADING OVERLAY ───────────────────────────────────────────────────── -->
+<div id="loadingOverlay" class="loading-overlay" style="display:none">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <p id="loadingText">Thinking…</p>
+  </div>
+</div>
+
+<!-- ─── TOAST ─────────────────────────────────────────────────────────────── -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="appToast" class="toast align-items-center" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toastBody">Message</div>
+      <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Marked (Markdown renderer) -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<!-- App JS -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

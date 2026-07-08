@@ -67,8 +67,8 @@ IBM_API_KEY        = os.getenv("IBM_API_KEY")
 WATSONX_PROJECT_ID = os.getenv("WATSONX_PROJECT_ID")
 WATSONX_URL        = os.getenv("WATSONX_URL", "https://us-south.ml.cloud.ibm.com")
 
-GRANITE_MODEL_ID = "ibm/granite-3-3-8b-instruct"   # primary chat / reasoning model
-GRANITE_FAST_ID  = "ibm/granite-3-2-8b-instruct"   # fallback / quiz generation
+GRANITE_MODEL_ID = "ibm/granite-4-h-small"
+GRANITE_FAST_ID  = "ibm/granite-4-h-small"
 
 _watsonx_client: APIClient | None = None
 _model: ModelInference | None = None
